@@ -1,0 +1,12 @@
+# Ignore raw images and giant CSVs
+meme_images/
+bluesky_meme_dataset.csv
+processed_features.pkl
+
+# Keep the final clustered dataset and preview images so Render can see them
+!clustered_dataset.pkl
+!clustered_preview/
+
+# Ignore Python cache
+__pycache__/
+.env
