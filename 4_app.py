@@ -75,25 +75,70 @@ with col1:
 with col2:
     st.subheader(f"Lifespan of Template {selected_cluster}")
     
+    # Ensure dates are proper datetime objects for accurate chart spacing
     chart_data = pd.DataFrame({
-        'Date': volume_matrix.index,
+        'Date': pd.to_datetime(volume_matrix.index),
         'Posting Volume': volume_matrix[selected_cluster].values
     })
     
+    # Define a clean X-axis format (e.g., "Apr 25") to be reused
+    clean_x_axis = alt.X('Date:T', title='Date', axis=alt.Axis(format='%b %d', labelAngle=-45, tickCount='day'))
+    
     # Check if we have more than one day of data
     if len(chart_data) > 1:
-        # Draw a line chart if we have a timeline
-        chart = alt.Chart(chart_data).mark_line(point=True, color='#0085ff').encode(
-            x='Date:T',
-            y='Posting Volume:Q',
-            tooltip=['Date:T', 'Posting Volume:Q']
-        ).interactive()
+        
+        # --- PREDICTION MATH ---
+        last_date = chart_data['Date'].iloc[-1]
+        last_vol = chart_data['Posting Volume'].iloc[-1]
+        
+        current_vel = velocity_matrix[selected_cluster].iloc[-1]
+        current_acc = acceleration_matrix[selected_cluster].iloc[-1]
+        
+        # Project Day 1
+        pred_date_1 = last_date + pd.Timedelta(days=1)
+        pred_vel_1 = current_vel + current_acc
+        pred_vol_1 = max(0, last_vol + pred_vel_1) # Cannot go below 0 volume
+        
+        # Project Day 2
+        pred_date_2 = pred_date_1 + pd.Timedelta(days=1)
+        pred_vel_2 = pred_vel_1 + current_acc
+        pred_vol_2 = max(0, pred_vol_1 + pred_vel_2)
+
+        # Create connection points for the chart layers
+        pred1_data = pd.DataFrame({'Date': [last_date, pred_date_1], 'Posting Volume': [last_vol, pred_vol_1]})
+        pred2_data = pd.DataFrame({'Date': [pred_date_1, pred_date_2], 'Posting Volume': [pred_vol_1, pred_vol_2]})
+
+        # --- DRAW MULTI-LAYER CHART ---
+        # 1. Actual Historical Line (Solid)
+        base_chart = alt.Chart(chart_data).mark_line(point=True, color='#0085ff', strokeWidth=3).encode(
+            x=clean_x_axis,
+            y=alt.Y('Posting Volume:Q', title='Posting Volume'),
+            tooltip=[alt.Tooltip('Date:T', title='Actual Date', format='%b %d, %Y'), alt.Tooltip('Posting Volume:Q', title='Volume')]
+        )
+        
+        # 2. Prediction Day 1 (Dotted)
+        pred1_chart = alt.Chart(pred1_data).mark_line(point=True, color='#0085ff', strokeWidth=3, strokeDash=[5, 5]).encode(
+            x=clean_x_axis,
+            y=alt.Y('Posting Volume:Q', title='Posting Volume'),
+            tooltip=[alt.Tooltip('Date:T', title='Predicted (Day 1)', format='%b %d, %Y'), alt.Tooltip('Posting Volume:Q', title='Predicted Volume')]
+        )
+        
+        # 3. Prediction Day 2 (Lighter, Thinner, Dotted)
+        pred2_chart = alt.Chart(pred2_data).mark_line(point=True, color='#80c2ff', strokeWidth=2, strokeDash=[2, 4]).encode(
+            x=clean_x_axis,
+            y=alt.Y('Posting Volume:Q', title='Posting Volume'),
+            tooltip=[alt.Tooltip('Date:T', title='Predicted (Day 2)', format='%b %d, %Y'), alt.Tooltip('Posting Volume:Q', title='Predicted Volume')]
+        )
+        
+        # Combine all three layers and enable horizontal-only zooming
+        chart = (base_chart + pred1_chart + pred2_chart).interactive(bind_y=False)
+        
     else:
         # Draw a bar chart if we only have one day of data
         chart = alt.Chart(chart_data).mark_bar(color='#0085ff').encode(
-            x='Date:T',
-            y='Posting Volume:Q',
-            tooltip=['Date:T', 'Posting Volume:Q']
-        )
+            x=alt.X('Date:T', title='Date', axis=alt.Axis(format='%b %d', labelAngle=0)),
+            y=alt.Y('Posting Volume:Q', title='Posting Volume'),
+            tooltip=[alt.Tooltip('Date:T', title='Actual Date', format='%b %d, %Y'), alt.Tooltip('Posting Volume:Q', title='Volume')]
+        ).interactive(bind_y=False)
     
     st.altair_chart(chart, use_container_width=True)
