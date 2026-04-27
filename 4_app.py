@@ -14,7 +14,8 @@ def load_data():
     df = pd.read_pickle('clustered_dataset.pkl')
     
     # Use ACTUAL timestamps from Bluesky
-    df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601')
+    # Use ACTUAL timestamps from Bluesky
+    df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', utc=True)
     df['date'] = df['timestamp'].dt.date
     
     # Calculate Matrices
