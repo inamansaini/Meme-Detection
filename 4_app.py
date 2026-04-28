@@ -6,16 +6,21 @@ import altair as alt
 st.set_page_config(page_title="Live Meme Trends", page_icon="📈", layout="wide")
 st.title("📈 Bluesky Live Meme Trend Detector")
 
-@st.cache_data(ttl=300) # Cache clears every 5 mins to load fresh data
-def load_data():
-    if not os.path.exists('clustered_dataset.pkl'):
+# By passing the filename as an argument, Streamlit will automatically 
+# refresh the dashboard the exact millisecond the file changes on Render.
+@st.cache_data
+def load_data(filepath):
+    if not os.path.exists(filepath):
         return None, None, None, None
         
-    df = pd.read_pickle('clustered_dataset.pkl')
+    df = pd.read_pickle(filepath)
     
-    # Use ACTUAL timestamps from Bluesky
-    # Use ACTUAL timestamps from Bluesky
+    # 1. Read the exact timestamp from Bluesky
     df['timestamp'] = pd.to_datetime(df['timestamp'], format='ISO8601', utc=True)
+    
+    # 2. Convert the server time to Indian Standard Time (IST) 
+    # so Render and your laptop perfectly agree on what "Today" is.
+    df['timestamp'] = df['timestamp'].dt.tz_convert('Asia/Kolkata')
     df['date'] = df['timestamp'].dt.date
     
     # Calculate Matrices
@@ -26,7 +31,8 @@ def load_data():
     
     return df, volume_matrix, velocity_matrix, acceleration_matrix
 
-df, volume_matrix, velocity_matrix, acceleration_matrix = load_data()
+# Call the function using the specific file path
+df, volume_matrix, velocity_matrix, acceleration_matrix = load_data('clustered_dataset.pkl')
 
 if df is None:
     st.error("No data found! Run steps 1, 2, and 3 first.")

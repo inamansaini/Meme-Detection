@@ -20,7 +20,7 @@ SEARCH_TERMS = [
     'gaming meme', 'relatable meme', 'shitpost', 
     'cat meme', 'crypto meme'
 ]
-POSTS_PER_TERM = 100  # Increased from 50 to 100
+POSTS_PER_TERM = 1000  # Increased from 50 to 100
 IMAGE_DIR = 'meme_images'
 CSV_FILENAME = 'bluesky_meme_dataset.csv'
 
