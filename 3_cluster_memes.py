@@ -22,8 +22,10 @@ df.to_pickle(OUTPUT_FILENAME)
 print(f"Saved to {OUTPUT_FILENAME}")
 
 # Create previews
-if not os.path.exists(PREVIEW_DIR):
-    os.makedirs(PREVIEW_DIR)
+if os.path.exists(PREVIEW_DIR):
+    shutil.rmtree(PREVIEW_DIR) # 💥 THIS IS THE FIX: Delete the old ghost folders!
+
+os.makedirs(PREVIEW_DIR)
 
 for cluster_num in range(NUMBER_OF_CLUSTERS):
     cluster_folder = os.path.join(PREVIEW_DIR, f"Template_{cluster_num}")
@@ -36,4 +38,4 @@ for cluster_num in range(NUMBER_OF_CLUSTERS):
         if os.path.exists(src):
             shutil.copy2(src, dst)
 
-print(f"Check the '{PREVIEW_DIR}' folder to see the groupings.")
+print(f"Check the '{PREVIEW_DIR}' folder to see the fresh groupings.")
