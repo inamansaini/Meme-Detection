@@ -1,0 +1,12 @@
+
+meme_images/
+bluesky_meme_dataset.csv
+processed_features.pkl
+
+
+!clustered_dataset.pkl
+!clustered_preview/
+
+
+__pycache__/
+.env
